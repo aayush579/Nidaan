@@ -9,5 +9,74 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+<script type="module">
+  // Firebase imports
+  import { initializeApp } from "firebase/app";
+  import { getAnalytics } from "firebase/analytics";
+  import { getFirestore, collection, getDocs, query, orderBy } from "firebase/firestore";
+
+  // Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyANyG6evTg6e-PEHfFc_7W5Mjz096GP9Qc",
+    authDomain: "nidaan-91594.firebaseapp.com",
+    projectId: "nidaan-91594",
+    storageBucket: "nidaan-91594.appspot.com",
+    messagingSenderId: "486268456173",
+    appId: "1:486268456173:web:196eae05c24b5aad2c90e4",
+    measurementId: "G-M1PG09ZGLB"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+  const db = getFirestore(app);
+
+  // Fetch and display issues
+  async function fetchAndDisplayIssues() {
+    const issuesContainer = document.getElementById('issues-container');
+    const loadingIndicator = document.getElementById('loading');
+
+    try {
+      const issuesCollectionRef = collection(db, "issues");
+      const q = query(issuesCollectionRef, orderBy("timestamp", "desc"));
+      const querySnapshot = await getDocs(q);
+
+      issuesContainer.innerHTML = '';
+      if (querySnapshot.empty) {
+        issuesContainer.innerHTML = '<p class="text-gray-500">No issue reports found.</p>';
+        return;
+      }
+
+      querySnapshot.forEach((doc) => {
+        const issue = doc.data();
+        const formattedDate = issue.timestamp ? new Date(issue.timestamp.seconds * 1000).toLocaleString() : 'Date not available';
+
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-lg shadow-md overflow-hidden';
+        card.innerHTML = `
+          <img src="${issue.imageUrl}" alt="Issue Image" class="w-full h-48 object-cover"
+            onerror="this.onerror=null;this.src='https://placehold.co/600x400/EEE/31343C?text=Image+Not+Found';">
+          <div class="p-4">
+            <p class="text-sm font-semibold text-blue-600">${issue.category}</p>
+            <p class="text-gray-800 mt-2">${issue.description}</p>
+            <div class="mt-4 text-xs text-gray-500">
+              <p>User ID: ${issue.userId}</p>
+              <p>Reported on: ${formattedDate}</p>
+            </div>
+          </div>
+        `;
+        issuesContainer.appendChild(card);
+      });
+
+    } catch (error) {
+      console.error("Error fetching issues: ", error);
+      loadingIndicator.innerText = 'Error loading reports. Check the console for details.';
+    }
+  }
+
+  window.onload = fetchAndDisplayIssues;
+</script>
+
+
   </body>
 </html>
